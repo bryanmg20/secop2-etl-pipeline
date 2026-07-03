@@ -1,0 +1,16 @@
+services:              
+  database_secop2:          
+    image: postgres:15 
+    environment:        # variables de entorno dentro del contenedor
+      POSTGRES_DB: "{DB_NAME}"      
+      POSTGRES_USER: "{DB_USER}"    
+      POSTGRES_PASSWORD: "{DB_PASSWORD}" 
+    ports:
+      - "${DB_PORT}:5432"     # puerto_tu_maquina:puerto_contenedor
+    volumes:
+      - postgres_data:/var/lib/postgresql/data  # donde guarda los datos
+                                                # para que persistan
+
+volumes:
+  postgres_data:        # define el volumen para que los datos no 
+                        # se pierdan cuando apagas el contenedor
