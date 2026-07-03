@@ -23,3 +23,7 @@ Las fechas de liquidacion de inicio a fin son igual o mas del 89% nulas, indican
 Existen contratos con valor_del_contrato igual a 0, posiblemente correspondientes a convenios o contratos sin costo directo. Se conservan en el análisis.
 
 Se encontró un caso en donde dos entidades tienen el mismo nombre, ubicacion, orden sector y rama, aunque difieren del NIT y codigo de la entidad. Se dejaron tal cual porque no hay manera de saber cuál es el real o si ambos pueden logicamente coexistir.
+
+Hallazgos de calidad de datos: 
+Se encontraron contratos duplicados en la fuente (mismo id_contract con 
+valores idénticos). Se eliminó el duplicado conservando una sola instancia.

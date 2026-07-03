@@ -2,7 +2,7 @@ import os
 from dotenv import load_dotenv
 import pandas as pd
 import requests
-from requests.exceptions import RequestException, Timeout, ConnectionError
+
 
 load_dotenv()
 

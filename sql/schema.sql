@@ -32,11 +32,11 @@ CREATE TABLE provider(
     type_of_provider VARCHAR(100),
     provider_document VARCHAR(100),
     name_provider VARCHAR(200),
-    is_pyme BOOLEAN,
+    is_pyme BOOLEAN
 );
 
 CREATE TABLE contract(
-    id_contract INTEGER PRIMARY KEY,
+    id_contract VARCHAR(100) PRIMARY KEY,
     id_entity INTEGER REFERENCES entity(id_entity),
     id_provider INTEGER REFERENCES provider(id_provider),
     id_contract_start_date INTEGER REFERENCES dim_date(id_date),
