@@ -2,9 +2,9 @@ services:
   database_secop2:          
     image: postgres:15 
     environment:        # variables de entorno dentro del contenedor
-      POSTGRES_DB: "{DB_NAME}"      
-      POSTGRES_USER: "{DB_USER}"    
-      POSTGRES_PASSWORD: "{DB_PASSWORD}" 
+      POSTGRES_DB: "${DB_NAME}"      
+      POSTGRES_USER: "${DB_USER}"    
+      POSTGRES_PASSWORD: "${DB_PASSWORD}" 
     ports:
       - "${DB_PORT}:5432"     # puerto_tu_maquina:puerto_contenedor
     volumes:
