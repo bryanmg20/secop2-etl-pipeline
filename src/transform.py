@@ -95,23 +95,3 @@ def transform_data(df: pd.DataFrame) -> pd.DataFrame:
         'date': date,
         'contract': contract
     }
-
-
-if __name__ == "__main__":
-
-    print("creating dataframe...")
-    df = pd.read_csv('data/raw/secop2_data_2024-2025.csv')
-
-    print("transforming data...")
-    table = transform_data(df)
-    
-    print('Location Table')
-    print(table['location'].head())
-    print('Entity Table')
-    print(table['entity'].head())
-    print('Provider Table')
-    print(table['provider'].head())
-    print('Date Table')
-    print(table['date'].head())
-    print('Contract Table')
-    print(table['contract'].head())

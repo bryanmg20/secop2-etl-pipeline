@@ -34,9 +34,9 @@ def extract_data() -> pd.DataFrame:
            
                 offset += limit
 
-                df = pd.DataFrame(data)
+                df_data = pd.DataFrame(data)
 
-                df.to_csv(csv_file, mode='a', header=not file_exists, index=False)
+                df_data.to_csv(csv_file, mode='a', header=not file_exists, index=False)
 
                 if not file_exists:
                     file_exists = True
@@ -65,7 +65,3 @@ def extract_data() -> pd.DataFrame:
 
     return df
     
-if __name__ == "__main__":
-    df = extract_data()
-    print(f"Total registros: {len(df)}")
-    print(df.head())
