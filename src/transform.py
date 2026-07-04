@@ -1,6 +1,31 @@
 import pandas as pd
+import unicodedata
+
+def remove_accents(text):
+    if isinstance(text, str):
+        return unicodedata.normalize('NFKD', text).encode('ascii', 'ignore').decode('utf-8')
+    return text
+
+def clean_text(series):
+    return series.apply(remove_accents).str.upper().str.strip('*/+-.,;:()[] ')
+
 
 def transform_data(df: pd.DataFrame) -> pd.DataFrame:
+    
+    # Clean text columns
+    df['ciudad'] = clean_text(df['ciudad'])
+    df['departamento'] = clean_text(df['departamento'])
+
+    df['nombre_entidad'] = clean_text(df['nombre_entidad'])
+    df['sector'] = clean_text(df['sector'])
+    df['rama'] = clean_text(df['rama'])
+    df['orden'] = clean_text(df['orden'])
+
+    df['estado_contrato'] = clean_text(df['estado_contrato'])
+    df['tipo_de_contrato'] = clean_text(df['tipo_de_contrato'])
+
+    df['tipodocproveedor'] = clean_text(df['tipodocproveedor'])
+    df['proveedor_adjudicado'] = clean_text(df['proveedor_adjudicado'])
 
     #transform location data
     location = df[['ciudad','departamento']]
@@ -18,6 +43,7 @@ def transform_data(df: pd.DataFrame) -> pd.DataFrame:
     entity.rename(columns={'ciudad': 'city', 'departamento': 'department','codigo_entidad':'id_entity',
                            'nombre_entidad':'name_entity','nit_entidad':'nit_entity','orden':'order_entity',
                            'rama':'branch_entity','sector':'sector_entity'}, inplace=True)
+    
     
     entity.drop_duplicates(inplace=True)
     entity = entity.merge(location, on=['city','department'], how='left')
