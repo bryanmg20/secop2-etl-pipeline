@@ -1,3 +1,9 @@
+DROP TABLE IF EXISTS contract;
+DROP TABLE IF EXISTS entity;
+DROP TABLE IF EXISTS provider;
+DROP TABLE IF EXISTS dim_date;
+DROP TABLE IF EXISTS location;
+
 CREATE TABLE location(
     id_location INTEGER PRIMARY KEY,
     department VARCHAR(100) NOT NULL,
@@ -5,9 +11,9 @@ CREATE TABLE location(
 );
 
 CREATE TABLE entity(
-    id_entity INTEGER PRIMARY KEY,
+    id_entity BIGINT PRIMARY KEY,
+    nit_entity BIGINT NOT NULL,
     id_location INTEGER REFERENCES location(id_location),
-    nit_entity INTEGER NOT NULL,
     name_entity VARCHAR(200) NOT NULL,
     order_entity VARCHAR(100),
     sector_entity VARCHAR(100),
@@ -19,9 +25,10 @@ CREATE TABLE dim_date(
     date DATE NOT NULL,
     year INTEGER NOT NULL,
     month INTEGER NOT NULL,
-    name_month VARCHAR(20) NOT NULL,
+    month_name VARCHAR(20) NOT NULL,
     quarter INTEGER NOT NULL,
     day_of_week INTEGER NOT NULL,
+    week INTEGER NOT NULL,
     is_weekend BOOLEAN NOT NULL,
     day INTEGER NOT NULL,
     day_name VARCHAR(20) NOT NULL
