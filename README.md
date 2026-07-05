@@ -32,7 +32,7 @@ TOP 10 entidades con mayor numero de contratos firmados entre el 2024 y 2025
 
 TOP 10 tipos de contratos con mayores valores de contratos firmados entre el 2024 y 2025
 
-![Dashboard](dasboard/contractvaluepertype.png)
+![Dashboard](dashboard/contractvaluepertype.png)
 
 TOP 10 tipos de contratos con mayores valores pagados hasta la fecha 05/07/26
 
