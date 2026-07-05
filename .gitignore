@@ -8,6 +8,8 @@ data/
 # Checkpoints de Jupyter
 .ipynb_checkpoints/
 
+dashboard/*.pbix
+
 # Python
 __pycache__/
 *.pyc
