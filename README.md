@@ -18,25 +18,25 @@ graph LR
 ```
 
 ## Modelo de datos
-![Modelo de datos](assets/data_model.png)
+![Modelo de datos](assets/database_model.png)
 
 ## Dashboard
 
 TOP 10 departamentos con mayor numero de contratos firmados entre el 2024 y 2025
 
-![Dashboard](assets/departmentpercontract.png)
+![Dashboard](dashboard/departmentpercontract.png)
 
 TOP 10 entidades con mayor numero de contratos firmados entre el 2024 y 2025
 
-![Dashboard](assets/nameentitypercontract.png)
+![Dashboard](dashboard/nameentitypercontract.png)
 
 TOP 10 tipos de contratos con mayores valores de contratos firmados entre el 2024 y 2025
 
-![Dashboard](assets/contractvaluepertype.png)
+![Dashboard](dasboard/contractvaluepertype.png)
 
 TOP 10 tipos de contratos con mayores valores pagados hasta la fecha 05/07/26
 
-![Dashboard](assets/paidamountpertype.png)
+![Dashboard](dashboard/paidamountpertype.png)
 
 
 # Calidad de datos
