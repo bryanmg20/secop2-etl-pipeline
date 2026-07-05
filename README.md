@@ -4,11 +4,42 @@ Pipeline ETL que extrae contratos públicos de SECOP II (datos.gov.co),
 los transforma y carga en PostgreSQL siguiendo un esquema estrella,
 con visualización en Power BI.
 
-**Tecnologías:** Python · Pandas · PostgreSQL · SQLAlchemy · Power BI
-
 ---
 
-Descubrimientos en exploration.ipynb con contratos con fecha de firma entre 2024-2025:
+## Arquitectura
+
+```mermaid
+graph LR
+    A[API SECOP II] --> B[extract.py]
+    B --> C[transform.py]
+    C --> D[load.py]
+    D --> E[(PostgreSQL)]
+    E --> F[Power BI]
+```
+
+## Modelo de datos
+![Modelo de datos](assets/data_model.png)
+
+## Dashboard
+
+TOP 10 departamentos con mayor numero de contratos firmados entre el 2024 y 2025
+
+![Dashboard](assets/departmentpercontract.png)
+
+TOP 10 entidades con mayor numero de contratos firmados entre el 2024 y 2025
+
+![Dashboard](assets/nameentitypercontract.png)
+
+TOP 10 tipos de contratos con mayores valores de contratos firmados entre el 2024 y 2025
+
+![Dashboard](assets/contractvaluepertype.png)
+
+TOP 10 tipos de contratos con mayores valores pagados hasta la fecha 05/07/26
+
+![Dashboard](assets/paidamountpertype.png)
+
+
+# Calidad de datos
 
 Porcentaje de valores nulos por columna:
 
@@ -31,3 +62,13 @@ Inicio antes que firma: 385
 Fin antes que inicio: 533
 
 Es necesario tener en cuenta estas inconcistencias a la hora de hacer calculos con fechas.
+
+## Tecnologías
+Python · Pandas · PostgreSQL · SQLAlchemy · Power BI · Docker · Git
+
+## Cómo ejecutar
+1. Clonar el repositorio
+2. `pip install -r requirements.txt`
+3. Configurar `.env` con credenciales
+4. `docker compose up -d`
+5. `python main.py`
