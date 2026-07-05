@@ -56,13 +56,13 @@ Hallazgos de calidad de datos:
 Se encontraron contratos duplicados en la fuente (mismo id_contract con 
 valores idénticos). Se eliminó el duplicado conservando una sola instancia.
 
-Se encontró fecha de fin del contrato en el año 5025, se dejaron tan cual, aunque con fechas incompatibles con pandas se pasaron a NaT. Supongo que se equivocaron escribiendo o es un contrato indefinido. Es de esperarse encontrarse mas fechas de este estilo.
+Se encontró fecha de fin del contrato en el año 5025, se dejaron tan cual, aunque con fechas incompatibles con pandas se pasaron a NaT. Correspondientes a que se equivocaron escribiendo o es un contrato indefinido. Es de esperarse encontrarse mas fechas de este estilo.
 
 Hallazgos de fechas de los contratos:
 Fecha de inicio del contrato antes que fecha de firma del contrato: 385
 Fecha de fin del contrato antes que fecha de inicio del contrato: 533
 
-Es necesario tener en cuenta estas inconcistencias a la hora de hacer calculos con fechas.
+Es necesario tener en cuenta estas inconsistencias a la hora de hacer calculos con fechas.
 
 ## Tecnologías
 Python · Pandas · PostgreSQL · SQLAlchemy · Power BI · Docker · Git
@@ -70,6 +70,7 @@ Python · Pandas · PostgreSQL · SQLAlchemy · Power BI · Docker · Git
 ## Cómo ejecutar
 1. Clonar el repositorio
 2. `pip install -r requirements.txt`
-3. Configurar `.env` con credenciales
+3. Configurar `.env` con credenciales basandose en el .env.example
 4. `docker compose up -d`
 5. `python main.py`
+
