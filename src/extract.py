@@ -4,14 +4,14 @@ import pandas as pd
 import requests
 import time
 
-from src.logger import get_logger
+from logger import get_logger
 
 logger = get_logger(__name__)
 
 load_dotenv()
 
 api_secopii = os.getenv("API_SECOPII")
-csv_file = 'data/raw/secop2-2426.csv'
+csv_file = 'data/raw/secop2-26_0707.csv'
 file_exists = os.path.exists(csv_file)
 
 def extract_data() -> pd.DataFrame:
@@ -43,8 +43,6 @@ def extract_data() -> pd.DataFrame:
 
     try:
         df = pd.read_csv(csv_file) if file_exists else pd.DataFrame()
-        if file_exists:
-            logger.info(f"Csv file found with {len(df)} records...")
         offset = len(df)
 
     except Exception as e:
@@ -56,7 +54,7 @@ def extract_data() -> pd.DataFrame:
             logger.info(f"Starting data extraction from offset {offset}...")
             response = requests.get(api_secopii, 
                                     params={'$select': ','.join(columns),
-                                            '$where': "fecha_de_firma >= '2024-01-01' and fecha_de_firma < '2026-01-01'",
+                                            '$where': "fecha_de_firma is not null",
                                             '$order': 'fecha_de_firma ASC',
                                             '$limit': limit, 
                                             '$offset': offset,
