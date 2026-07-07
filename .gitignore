@@ -10,6 +10,8 @@ data/
 
 dashboard/*.pbix
 
+logs/
+
 # Python
 __pycache__/
 *.pyc

@@ -1,31 +1,45 @@
 import pandas as pd
 import unicodedata
 
-def remove_accents(text):
+from src.logger import get_logger
+
+logger = get_logger(__name__)
+
+def remove_accents(text) -> str:
+    """Remove accents from a given string.
+    Args:
+        text (str): The input string.
+    Returns:
+        str: The string without accents.
+    """
     if isinstance(text, str):
         return unicodedata.normalize('NFKD', text).encode('ascii', 'ignore').decode('utf-8')
     return text
 
-def clean_text(series):
+def clean_text(series) -> pd.Series:
+    """Clean a pandas Series by removing accents, converting to uppercase, and stripping unwanted characters.
+    Args:
+        series (pd.Series): The input pandas Series.
+    Returns:
+        pd.Series: The cleaned pandas Series.
+    """
     return series.apply(remove_accents).str.upper().str.strip('*/+-.,;:()[] ')
 
 
-def transform_data(df: pd.DataFrame) -> pd.DataFrame:
-    
+def transform_data(df: pd.DataFrame) -> dict:
+    """Transform the extracted data into a structured format suitable for loading into the database.
+    Args:
+        df (pd.DataFrame): The extracted data.
+    Returns:
+        dict: A dictionary containing the transformed data for each dimension.
+    """
     # Clean text columns
-    df['ciudad'] = clean_text(df['ciudad'])
-    df['departamento'] = clean_text(df['departamento'])
+    columns_to_clean = ['ciudad', 'departamento', 'nombre_entidad', 'sector', 'rama', 'orden',
+                        'estado_contrato', 'tipo_de_contrato', 'tipodocproveedor', 'proveedor_adjudicado']
 
-    df['nombre_entidad'] = clean_text(df['nombre_entidad'])
-    df['sector'] = clean_text(df['sector'])
-    df['rama'] = clean_text(df['rama'])
-    df['orden'] = clean_text(df['orden'])
+    for col in columns_to_clean:
+        df[col] = clean_text(df[col])
 
-    df['estado_contrato'] = clean_text(df['estado_contrato'])
-    df['tipo_de_contrato'] = clean_text(df['tipo_de_contrato'])
-
-    df['tipodocproveedor'] = clean_text(df['tipodocproveedor'])
-    df['proveedor_adjudicado'] = clean_text(df['proveedor_adjudicado'])
 
     #transform location data
     location = df[['ciudad','departamento']]
@@ -36,6 +50,8 @@ def transform_data(df: pd.DataFrame) -> pd.DataFrame:
     location.reset_index(drop=True, inplace=True) 
 
     location['id_location'] = range(1,len(location)+1)
+
+    logger.info(f"Location data transformed: {len(location)} unique records created.")
 
     #transform entity data
     entity = df[['codigo_entidad','nombre_entidad','nit_entidad','orden','sector','rama', 'ciudad','departamento']]
@@ -50,6 +66,8 @@ def transform_data(df: pd.DataFrame) -> pd.DataFrame:
 
     entity.drop(columns=['city','department'], inplace=True)
 
+    logger.info(f"Entity data transformed: {len(entity)} unique records created.")
+
     #transform provider data
     provider = df[['codigo_proveedor','proveedor_adjudicado','documento_proveedor', 'es_pyme','tipodocproveedor']]
 
@@ -60,6 +78,8 @@ def transform_data(df: pd.DataFrame) -> pd.DataFrame:
     provider.drop_duplicates(inplace=True)
 
     provider['is_pyme'] = provider['is_pyme'].map({'Si': True, 'No': False})
+
+    logger.info(f"Provider data transformed: {len(provider)} unique records created.")
 
     #transform dates data
     pre_date = pd.concat([df['fecha_de_inicio_del_contrato'], df['fecha_de_fin_del_contrato'], df['fecha_de_firma'], df['fecha_inicio_liquidacion'], df['fecha_fin_liquidacion']])
@@ -83,6 +103,8 @@ def transform_data(df: pd.DataFrame) -> pd.DataFrame:
 
     #id_date
     date['id_date'] = date['date'].dt.strftime('%Y%m%d').astype('Int64')
+
+    logger.info(f"Date data transformed: {len(date)} unique records created.")
 
     #transform contract data
     contract = df[['id_contrato','codigo_entidad','codigo_proveedor','fecha_de_inicio_del_contrato',
@@ -113,6 +135,7 @@ def transform_data(df: pd.DataFrame) -> pd.DataFrame:
     contract['environmental_obligation'] = contract['environmental_obligation'].map({'Si': True, 'No': False})
     contract['is_post_conflict'] = contract['is_post_conflict'].map({'Si': True, 'No': False})
 
+    logger.info(f"Contract data transformed: {len(contract)} unique records created.")
 
     return {
         'location': location,

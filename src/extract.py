@@ -2,7 +2,11 @@ import os
 from dotenv import load_dotenv
 import pandas as pd
 import requests
+import time
 
+from src.logger import get_logger
+
+logger = get_logger(__name__)
 
 load_dotenv()
 
@@ -11,8 +15,12 @@ csv_file = 'data/raw/secop2-2426.csv'
 file_exists = os.path.exists(csv_file)
 
 def extract_data() -> pd.DataFrame:
+    """Extract data from the SECOP II API and save it to a CSV file.
+    Returns:
+        pd.DataFrame: The extracted data.
+    """
     global file_exists
-
+    limit=5000
     columns = [
     # location
     'departamento', 'ciudad',
@@ -32,13 +40,20 @@ def extract_data() -> pd.DataFrame:
     'fecha_inicio_liquidacion', 'fecha_fin_liquidacion'
     ]
 
-    limit=5000
-    df = pd.read_csv(csv_file) if file_exists else pd.DataFrame()
-    offset = len(df)
+
+    try:
+        df = pd.read_csv(csv_file) if file_exists else pd.DataFrame()
+        if file_exists:
+            logger.info(f"Csv file found with {len(df)} records...")
+        offset = len(df)
+
+    except Exception as e:
+        logger.error(f"Error reading CSV file: {e}")
+        offset = 0
         
-  
     while True:
         try:
+            logger.info(f"Starting data extraction from offset {offset}...")
             response = requests.get(api_secopii, 
                                     params={'$select': ','.join(columns),
                                             '$where': "fecha_de_firma >= '2024-01-01' and fecha_de_firma < '2026-01-01'",
@@ -49,7 +64,7 @@ def extract_data() -> pd.DataFrame:
             if response.status_code == 200:
                 data = response.json()
                 if not data:
-                    print("No more data to fetch.")
+                    logger.info("No more data to fetch.")
                     break
            
                 offset += limit
@@ -62,28 +77,33 @@ def extract_data() -> pd.DataFrame:
                 if not file_exists:
                     file_exists = True
 
-                print(f"Fetched {len(df_data)} records...")
+                logger.info(f"Fetched {len(df_data)} records...")
 
             elif response.status_code == 503:
-                print("Service unavailable. Retrying...")
+                logger.warning("Service unavailable. Retrying...")
+                time.sleep(5)  # Wait for 5 seconds before retrying
                 continue
 
             elif response.status_code == 429:
-                print("Rate limit exceeded. Retrying...")
+                logger.warning("Rate limit exceeded. Retrying...")
+                time.sleep(10)  # Wait for 10 seconds before retrying
                 continue
 
             else:
-                print(f"Error: {response.status_code}")
+                logger.error(f"Error: {response.status_code}")
                 break
         except (requests.exceptions.Timeout, requests.exceptions.ConnectionError) as e:
-            print(f"Request failed: {e}")
+            logger.error(f"Request failed: {e}")
             break
     
     
+    try:
+        df = pd.read_csv(csv_file) if file_exists else pd.DataFrame()
+    except Exception as e:
+        logger.critical(f"Error reading CSV file after extraction: {e}")
+        raise
 
-    df = pd.read_csv(csv_file) if file_exists else pd.DataFrame()
-
-    print(f"Csv file with {len(df)} records...")
+    logger.info(f"Extraction completed: {len(df)} records loaded from {csv_file}")
 
     return df
     
