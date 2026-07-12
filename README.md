@@ -1,6 +1,11 @@
 # SECOP II ETL Pipeline
 
-Pipeline ETL que extrae los datos públicos de contratación del SECOP II, los transforma y los carga en PostgreSQL siguiendo un modelo dimensional (esquema estrella), proporcionando una base de datos optimizada para análisis y consultas.
+Pipeline ETL que extrae todos los contratos públicos del SECOP II (datos.gov.co),
+los transforma y los carga incrementalmente en PostgreSQL siguiendo un modelo 
+dimensional (esquema estrella). El objetivo es construir un data warehouse limpio, 
+documentado y listo para ser consumido por herramientas de análisis, BI y ciencia de datos.
+
+Fuente de datos: [SECOP II — Contratos Electrónicos](https://www.datos.gov.co/resource/jbjy-vk9h)
 
 ---
 
