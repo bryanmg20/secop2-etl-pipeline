@@ -12,6 +12,8 @@ dashboard/*.pbix
 
 logs/
 
+offset.txt
+
 # Python
 __pycache__/
 *.pyc

@@ -62,7 +62,7 @@ def main() -> None:
                 transformed_contract = transform_contract_data(data)
                 load_contract(transformed_contract, conn, schema)
 
-            last_row_id = data.iloc[-1][":id"]  # ajusta la clave si es distinta
+            last_row_id = data.iloc[-1][":id"]  
 
             with open("offset.txt", "w") as f:
                 json.dump({"last_row_id": last_row_id}, f)
