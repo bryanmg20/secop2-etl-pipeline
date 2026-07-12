@@ -16,9 +16,9 @@ Pipeline ETL que extrae los datos públicos de contratación del SECOP II, los t
 
 ```mermaid
 graph LR
-    A[API SECOP II] --> B[extract.py]
-    B --> C[transform.py]
-    C --> D[load.py]
+    A[API SECOP II] --> B[extraction]
+    B --> C[transformation]
+    C --> D[loading]
     D --> E[(PostgreSQL)]
 ```
 
@@ -33,4 +33,3 @@ Python · Pandas · PostgreSQL · SQLAlchemy · Power BI · Docker · Git
 
 - Documentación técnica: [`docs/`](docs/)
 - Dashboards y diagramas: [`assets/`](assets/)
-

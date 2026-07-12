@@ -1,94 +1,165 @@
-# Data Dictionary
+# Data Dictionary — SECOP II Data Warehouse
 
-## Tabla de la ubicacion
-### `location`
-
-##Tabla de Ubicacion
-
-#location 
-
-| Campo | Tipo | Descripción |
-|-------|------|-------------|
-| id_location | INTEGER PRIMARY KEY | Es el identificador unico de la ubicacion departamento/ciudad|
-| department | VARCHAR | Departamento de colombia |
-| city | VARCHAR | Municipio de un departamento |
-
-## Tabla de Entidad
-### `entity`
-
-Contiene la información de las entidades públicas contratantes.
-
-| Campo | Tipo | Descripción |
-|-------|------|-------------|
-| id_entity | BIGINT PRIMARY KEY | Identificador único de la entidad contratante. |
-| nit_entity | BIGINT | Número de Identificación Tributaria (NIT) de la entidad. |
-| id_location | INTEGER (FK) | Referencia a la ubicación (departamento y municipio) de la entidad. |
-| name_entity | VARCHAR(200) | Nombre de la entidad contratante. |
-| order_entity | VARCHAR(100) | Orden administrativo de la entidad (Nacional, Territorial, etc.). |
-| sector_entity | VARCHAR(100) | Sector al que pertenece la entidad. |
-| branch_entity | VARCHAR(100) | Rama del poder público a la que pertenece la entidad. |
+Schema: `secop2ce`  
+Source: [datos.gov.co — SECOP II Contratos Electrónicos](https://www.datos.gov.co/resource/jbjy-vk9h)  
+Last updated: 2026-07-11
 
 ---
 
-## Tabla de Fechas
+## Table: `location`
 
-### `dim_date`
+Geographic reference table. Contains unique combinations of department and city found across all contracts.
 
-Dimensión de fechas utilizada para el análisis temporal de los contratos.
+| Column | Type | Nullable | Description |
+|---|---|---|---|
+| `id_location` | SERIAL | NOT NULL | Surrogate primary key, auto-generated |
+| `department` | VARCHAR(100) | NOT NULL | Colombian department name (uppercase, no accents) |
+| `city` | VARCHAR(100) | NOT NULL | Municipality or city name (uppercase, no accents) |
 
-| Campo | Tipo | Descripción |
-|-------|------|-------------|
-| id_date | INTEGER PRIMARY KEY | Identificador único de la fecha. |
-| date | DATE | Fecha completa. |
-| year | INTEGER | Año correspondiente a la fecha. |
-| month | INTEGER | Número del mes (1–12). |
-| month_name | VARCHAR(20) | Nombre del mes. |
-| quarter | INTEGER | Trimestre del año (1–4). |
-| day_of_week | INTEGER | Número del día de la semana. |
-| week | INTEGER | Número de la semana del año. |
-| is_weekend | BOOLEAN | Indica si la fecha corresponde a un fin de semana. |
-| day | INTEGER | Día del mes. |
-| day_name | VARCHAR(20) | Nombre del día de la semana. |
+**Notes:**
+- Combination of `department` + `city` is unique (UNIQUE constraint)
+- Values normalized to uppercase and stripped of accents during transformation
 
 ---
 
-## Tabla de Proveedores
+## Table: `entity`
 
-### `provider`
+Public entities that issue contracts through SECOP II.
 
-Contiene la información de los proveedores asociados a los contratos.
+| Column | Type | Nullable | Description |
+|---|---|---|---|
+| `id_entity` | BIGINT | NOT NULL | Surrogate primary key, generated from `codigo_entidad` in source |
+| `nit_entity` | BIGINT | NOT NULL | Legal tax identification number (NIT) of the entity |
+| `id_location` | INTEGER | NULL | Foreign key to `location` |
+| `name_entity` | VARCHAR(200) | NOT NULL | Official name of the entity (uppercase, no accents) |
+| `order_entity` | VARCHAR(100) | NULL | Administrative order (e.g. NACIONAL, TERRITORIAL) |
+| `sector_entity` | VARCHAR(100) | NULL | Sector the entity belongs to (e.g. SALUD, EDUCACION) |
+| `branch_entity` | VARCHAR(100) | NULL | Branch of government (e.g. EJECUTIVO, JUDICIAL) |
+| `centralized_entity` | BOOLEAN | NULL | Whether the entity is centralized |
 
-| Campo | Tipo | Descripción |
-|-------|------|-------------|
-| id_provider | INTEGER PRIMARY KEY | Identificador único del proveedor. |
-| type_of_provider | VARCHAR(100) | Tipo de proveedor registrado en SECOP II. |
-| provider_document | VARCHAR(100) | Número del documento de identificación del proveedor. |
-| name_provider | VARCHAR(200) | Nombre o razón social del proveedor. |
-| is_pyme | BOOLEAN | Indica si el proveedor está clasificado como PYME. |
+**Notes:**
+- The same NIT can correspond to multiple entities (e.g. national institutions with regional offices like SENA)
+- `id_entity` is derived from `codigo_entidad` in SECOP II
+- `codigo_entidad` was found to be shared across different entities in some cases, likely due to data capture errors in SECOP II
 
 ---
 
-## Tabla de Contratos
+## Table: `provider`
 
-### `contract`
+Natural persons or legal entities that receive public contracts.
 
-Tabla de hechos que almacena la información principal de cada contrato.
+| Column | Type | Nullable | Description |
+|---|---|---|---|
+| `id_provider` | BIGINT | NOT NULL | Surrogate primary key, generated from `codigo_proveedor` in source |
+| `type_of_provider` | VARCHAR(100) | NULL | Document type (e.g. NIT, Cédula de Ciudadanía) |
+| `provider_document` | VARCHAR(100) | NULL | Document number of the provider |
+| `name_provider` | VARCHAR(200) | NULL | Full name of the provider |
+| `is_pyme` | BOOLEAN | NULL | Whether the provider is classified as a SME (PYME) |
+| `is_group` | BOOLEAN | NULL | Whether the provider is a consortium or temporary union |
 
-| Campo | Tipo | Descripción |
-|-------|------|-------------|
-| id_contract | VARCHAR(100) PRIMARY KEY | Identificador único del contrato. |
-| id_entity | INTEGER (FK) | Referencia a la entidad contratante. |
-| id_provider | INTEGER (FK) | Referencia al proveedor contratado. |
-| id_contract_start_date | INTEGER (FK) | Referencia a la fecha de inicio del contrato. |
-| id_contract_end_date | INTEGER (FK) | Referencia a la fecha de finalización del contrato. |
-| id_liquidation_start_date | INTEGER (FK) | Referencia a la fecha de inicio de la liquidación del contrato. |
-| id_liquidation_end_date | INTEGER (FK) | Referencia a la fecha de finalización de la liquidación del contrato. |
-| id_signing_date | INTEGER (FK) | Referencia a la fecha de firma del contrato. |
-| contract_state | VARCHAR(100) | Estado actual del contrato. |
-| contract_type | VARCHAR(100) | Tipo de contrato. |
-| liquidation | BOOLEAN | Indica si el contrato fue liquidado. |
-| environmental_obligation | BOOLEAN | Indica si el contrato contempla obligaciones ambientales. |
-| is_post_conflict | BOOLEAN | Indica si el contrato está relacionado con programas de posconflicto. |
-| contract_value | DECIMAL(20,2) | Valor total del contrato. |
-| pending_payment_amount | DECIMAL(20,2) | Valor pendiente de pago. |
-| paid_amount | DECIMAL(20,2) | Valor pagado del contrato. |
+**Notes:**
+- `is_pyme` and `is_group` were converted from "Si"/"No" text values to boolean
+
+---
+
+## Table: `dim_date`
+
+Date dimension. Contains one row per unique date referenced across all contract date fields.
+
+| Column | Type | Nullable | Description |
+|---|---|---|---|
+| `id_date` | INTEGER | NOT NULL | Primary key in YYYYMMDD format (e.g. 20240115) |
+| `date` | DATE | NOT NULL | Full date value |
+| `year` | INTEGER | NOT NULL | Calendar year |
+| `month` | INTEGER | NOT NULL | Month number (1–12) |
+| `month_name` | VARCHAR(20) | NOT NULL | Month name in English (e.g. January) |
+| `quarter` | INTEGER | NOT NULL | Quarter (1–4) |
+| `week` | INTEGER | NOT NULL | ISO week number (1–53) |
+| `day` | INTEGER | NOT NULL | Day of month (1–31) |
+| `day_of_week` | INTEGER | NOT NULL | Day of week (0=Monday, 6=Sunday) |
+| `day_name` | VARCHAR(20) | NOT NULL | Day name in English (e.g. Monday) |
+| `is_weekend` | BOOLEAN | NOT NULL | True if Saturday or Sunday |
+
+**Notes:**
+
+- `id_date` uses YYYYMMDD integer format for readability and efficient joining
+
+---
+
+## Table: `contract`
+
+Fact table. Central table of the star schema. Contains one row per unique electronic contract registered in SECOP II.
+
+### Identifiers
+
+| Column | Type | Nullable | Description |
+|---|---|---|---|
+| `id_contract` | VARCHAR(100) | NOT NULL | Primary key. Original contract ID from SECOP II (e.g. CO1.PCCNTR.5717120) |
+| `id_entity` | BIGINT | NULL | Foreign key to `entity` |
+| `id_provider` | BIGINT | NULL | Foreign key to `provider` |
+
+### Date Foreign Keys
+
+| Column | Type | Nullable | Description |
+|---|---|---|---|
+| `id_contract_start_date` | INTEGER | NULL | FK to `dim_date`. Date the contract execution began |
+| `id_contract_end_date` | INTEGER | NULL | FK to `dim_date`. Date the contract execution was expected to end |
+| `id_signing_date` | INTEGER | NULL | FK to `dim_date`. Date the contract was formally signed |
+| `id_liquidation_start_date` | INTEGER | NULL | FK to `dim_date`. Date the liquidation process started |
+| `id_liquidation_end_date` | INTEGER | NULL | FK to `dim_date`. Date the liquidation process ended |
+| `id_last_update_date` | INTEGER | NULL | FK to `dim_date`. Date the record was last updated in SECOP II |
+
+
+### Contract Information
+
+| Column | Type | Nullable | Description |
+|---|---|---|---|
+| `contract_state` | VARCHAR(100) | NULL | Current state (e.g. En ejecución, Liquidado, Terminado) |
+| `contract_type` | VARCHAR(100) | NULL | Type of contract (e.g. Prestación de servicios, Obra) |
+| `method_of_contracting` | VARCHAR(100) | NULL | Contracting modality (e.g. Contratación directa, Licitación pública) |
+| `source_of_resources` | VARCHAR(200) | NULL | Origin of funding |
+| `destination_of_expense` | VARCHAR(200) | NULL | Budget destination category |
+
+### Monetary Values
+
+| Column | Type | Nullable | Description |
+|---|---|---|---|
+| `contract_value` | NUMERIC(30,2) | NULL | Total value of the contract in Colombian pesos (COP) |
+| `paid_value` | NUMERIC(30,2) | NULL | Amount paid to date |
+| `advance_payment_value` | NUMERIC(30,2) | NULL | Advance payment amount |
+| `pending_payment_value` | NUMERIC(30,2) | NULL | Amount pending payment |
+| `invoiced_value` | NUMERIC(30,2) | NULL | Amount invoiced by the provider |
+| `amortized_value` | NUMERIC(30,2) | NULL | Amortized advance payment amount |
+| `pending_amortization_value` | NUMERIC(30,2) | NULL | Advance payment pending amortization |
+| `pending_execution_value` | NUMERIC(30,2) | NULL | Contract value pending execution |
+
+**Monetary notes:**
+- All values are in Colombian pesos (COP)
+- Some contracts have `contract_value = 0`, possibly corresponding to cooperation agreements or non-monetary contracts
+- No negative values were found
+
+### Duration
+
+| Column | Type | Nullable | Description |
+|---|---|---|---|
+| `additional_days` | INTEGER | NULL | Days added to the original contract duration through modifications |
+| `contract_can_be_extended` | BOOLEAN | NULL | Whether the contract allows extension |
+
+**Duration notes:**
+- Total contract duration should not be calculated solely from `id_contract_start_date` and `id_contract_end_date` without accounting for `additional_days`, as modifications may have extended the original term
+
+### Boolean Flags
+
+| Column | Type | Nullable | Description |
+|---|---|---|---|
+| `liquidation` | BOOLEAN | NULL | Whether the contract has been liquidated |
+| `environmental_obligation` | BOOLEAN | NULL | Whether the contract has environmental obligations |
+| `is_post_conflict` | BOOLEAN | NULL | Whether the contract is associated with Colombia's peace agreement |
+| `allows_advance_payment` | BOOLEAN | NULL | Whether advance payment is enabled |
+| `post_consumer_obligations` | BOOLEAN | NULL | Whether post-consumer obligations apply |
+| `reversion` | BOOLEAN | NULL | Whether a reversion clause exists |
+
+**Boolean notes:**
+- All boolean fields were converted from "Si"/"No" text values in the source
+
+---
