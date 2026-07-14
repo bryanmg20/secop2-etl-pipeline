@@ -1,3 +1,4 @@
+from datetime import timedelta
 import json
 import pandas as pd
 import database
@@ -71,13 +72,19 @@ def main() -> None:
                 with engine.begin() as conn:
                     df = pd.read_sql_query(query, conn)
 
-                last_update = df.iloc[0, 0].astype(str)
-                last_signing = df.iloc[0, 1].astype(str)
+                last_update = pd.to_datetime(str(df.iloc[0,0]), format="%Y%m%d")
+                last_signing = pd.to_datetime(str(df.iloc[0,1]), format="%Y%m%d")
 
-                last_update = f'{last_update[:4]}-{last_update[4:6]}-{last_update[6:]}'
-                last_signing = f'{last_signing[:4]}-{last_signing[4:6]}-{last_signing[6:]}'
+                LOOKBACK_DAYS = 3
 
-                where_clause = f"ultima_actualizacion > '{last_update}' OR fecha_de_firma > '{last_signing}'"
+                last_update = last_update - timedelta(days=LOOKBACK_DAYS)
+                last_signing = last_signing - timedelta(days=LOOKBACK_DAYS)
+
+                last_update = last_update.strftime("%Y-%m-%d")
+                last_signing = last_signing.strftime("%Y-%m-%d")
+
+
+                where_clause = f"(ultima_actualizacion >= '{last_update}' OR fecha_de_firma >= '{last_signing}')"
                 if last_row_id is not None:
                     where_clause += f" AND :id > '{last_row_id}'"
 
