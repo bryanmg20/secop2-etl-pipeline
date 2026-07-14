@@ -1,0 +1,24 @@
+name: Run Incremental ETL
+
+on:
+  schedule:
+    # Every day at 23:00 UTC
+    - cron: "0 23 * * *"
+
+  workflow_dispatch:
+
+jobs:
+  run-etl:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Execute pipeline on DigitalOcean
+        uses: appleboy/ssh-action@v1.2.2
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT }}
+          command_timeout: 120m
+          script: |
+            /opt/scripts/update_database-incremental.sh
