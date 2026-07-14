@@ -9,12 +9,15 @@ Fuente de datos: [SECOP II — Contratos Electrónicos](https://www.datos.gov.co
 
 ---
 
-## Cómo ejecutar
+## Cómo ejecutar en local
 1. Clonar el repositorio
 2. `pip install -r requirements.txt`
 3. Configurar `.env` con credenciales basandose en el .env.example
 4. `docker compose up -d`
-5. `python main.py`
+5. `python main.py --mode initial o python main.py --mode incremental`
+
+--mode initial: Para la primera vez que ejecutas el pipeline
+--mode incremental: Para actualizar la base de datos 
 
 
 ## Arquitectura
