@@ -1,5 +1,7 @@
 import json
+import pandas as pd
 import database
+import argparse
 
 from src.extract import extract_data
 from src.logger import get_logger
@@ -31,17 +33,55 @@ def load_cursor():
 def main() -> None:
     """Main function to orchestrate the ETL pipeline."""
 
+    # Set up argument parser for mode selection
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--mode",
+        choices=["initial", "incremental"],
+        required=True
+    )
+    args = parser.parse_args()
+    
+    # Establish database connection and create schema if it doesn't exist
     engine = database.get_connection()
     schema = "secop2ce"
 
     with engine.begin() as conn:
         database.create_schema(conn)
 
-    last_row_id = load_cursor()
+
+    # Load the last processed row ID from the cursor file
+    last_row_id = load_cursor() if args.mode == "initial" else None
+        
 
     try:
         while True:
-            data = extract_data(last_row_id)
+
+            if args.mode == "initial":
+                where_clause = "fecha_de_firma IS NOT NULL" 
+                if last_row_id is not None:
+                    where_clause += f" AND :id > '{last_row_id}'"
+
+            elif args.mode == "incremental":
+
+                query = """
+                        SELECT MAX(id_last_update_date), MAX(id_signing_date) FROM {schema}.contract
+                        """.format(schema=schema)
+
+                with engine.begin() as conn:
+                    df = pd.read_sql_query(query, conn)
+
+                last_update = df.iloc[0, 0].astype(str)
+                last_signing = df.iloc[0, 1].astype(str)
+
+                last_update = f'{last_update[:4]}-{last_update[4:6]}-{last_update[6:]}'
+                last_signing = f'{last_signing[:4]}-{last_signing[4:6]}-{last_signing[6:]}'
+
+                where_clause = f"ultima_actualizacion > '{last_update}' OR fecha_de_firma > '{last_signing}'"
+                if last_row_id is not None:
+                    where_clause += f" AND :id > '{last_row_id}'"
+
+            data = extract_data(where_clause)
 
             if data is False:  # No more data to fetch
                 break
@@ -62,10 +102,11 @@ def main() -> None:
                 transformed_contract = transform_contract_data(data)
                 load_contract(transformed_contract, conn, schema)
 
-            last_row_id = data.iloc[-1][":id"]  
+            last_row_id = data.iloc[-1][":id"]
 
-            with open("offset.txt", "w") as f:
-                json.dump({"last_row_id": last_row_id}, f)
+            if args.mode == "initial":
+                with open("offset.txt", "w") as f:
+                    json.dump({"last_row_id": last_row_id}, f)
 
     except Exception as e:
         logger.critical(f"Pipeline failed: {e}")

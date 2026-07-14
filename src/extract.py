@@ -14,12 +14,11 @@ api_secopii = os.getenv("API_SECOPII")
 app_token = os.getenv("SOCRATA_APP_TOKEN")  # opcional pero recomendado
 
 
-def extract_data(last_row_id=None) -> pd.DataFrame:
+def extract_data(where_clause=None) -> pd.DataFrame:
     """Extract data from the SECOP II API using keyset pagination on :id.
 
     Args:
-        last_row_id: valor de la columna de sistema :id del último registro
-            procesado (None en la primera llamada).
+        where_clause: cláusula WHERE para filtrar los datos.
 
     Returns:
         pd.DataFrame: los datos extraídos, o False si no hay más datos.
@@ -51,9 +50,6 @@ def extract_data(last_row_id=None) -> pd.DataFrame:
 
     select_columns = [':id'] + columns  # pedimos también la columna de sistema
 
-    where_clause = "fecha_de_firma IS NOT NULL"  # ejemplo de filtro, puedes ajustarlo según tus necesidades
-    if last_row_id is not None:
-        where_clause += f" AND :id > '{last_row_id}'"
 
     params = {
         '$select': ','.join(select_columns),
@@ -65,7 +61,7 @@ def extract_data(last_row_id=None) -> pd.DataFrame:
     headers = {'X-App-Token': app_token} if app_token else {}
 
     try:
-        logger.info(f"Starting data extraction after :id = {last_row_id}...")
+        logger.info(f"Starting data extraction with WHERE clause: {where_clause}")
         response = requests.get(api_secopii, params=params, headers=headers, timeout=(60, 120))
     
         if response.status_code == 200:
@@ -83,12 +79,12 @@ def extract_data(last_row_id=None) -> pd.DataFrame:
         elif response.status_code == 503:
             logger.warning("Service unavailable. Retrying...")
             time.sleep(5)
-            return extract_data(last_row_id)
+            return extract_data(where_clause)
 
         elif response.status_code == 429:
             logger.warning("Rate limit exceeded. Retrying...")
             time.sleep(10)
-            return extract_data(last_row_id)
+            return extract_data(where_clause)
 
         else:
             logger.error(f"Error: {response.status_code} - {response.text}")
@@ -97,4 +93,4 @@ def extract_data(last_row_id=None) -> pd.DataFrame:
     except (requests.exceptions.Timeout, requests.exceptions.ConnectionError) as e:
         logger.error(f"Request failed: {e}. Retrying...")
         time.sleep(10)
-        return extract_data(last_row_id)
+        return extract_data(where_clause)
