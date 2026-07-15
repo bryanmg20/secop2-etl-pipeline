@@ -3,3 +3,4 @@ requests
 python-dotenv
 SQLAlchemy
 psycopg2-binary
+pytest
