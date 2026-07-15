@@ -1,43 +1,87 @@
 # SECOP II ETL Pipeline
 
-Pipeline ETL que extrae todos los contratos públicos del SECOP II (datos.gov.co),
-los transforma y los carga incrementalmente en PostgreSQL siguiendo un modelo 
-dimensional (esquema estrella). El objetivo es construir un data warehouse limpio, 
-documentado y listo para ser consumido por herramientas de análisis, BI y ciencia de datos.
+<p align="center">
 
-Fuente de datos: [SECOP II — Contratos Electrónicos](https://www.datos.gov.co/resource/jbjy-vk9h)
+![Python](https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-4169E1?logo=postgresql&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-2496ED?logo=docker&logoColor=white)
+![DigitalOcean](https://img.shields.io/badge/DigitalOcean-Droplet-0080FF?logo=digitalocean&logoColor=white)
+![GitHub Actions](https://img.shields.io/badge/GitHub_Actions-Automated-2088FF?logo=githubactions&logoColor=white)
+
+</p>
+
+Production-ready ETL pipeline that incrementally extracts Colombian public procurement contracts from **SECOP II**, transforms the data into a dimensional model, and loads it into a PostgreSQL data warehouse designed for analytical workloads.
 
 ---
 
-## Cómo ejecutar en local
-1. Clonar el repositorio
-2. `pip install -r requirements.txt`
-3. Configurar `.env` con credenciales basandose en el .env.example
-4. `docker compose up -d`
-5. `python main.py --mode initial o python main.py --mode incremental`
+## Overview
 
---mode initial: Para la primera vez que ejecutas el pipeline
---mode incremental: Para actualizar la base de datos 
+SECOP II is Colombia's official public procurement platform and publishes millions of contract records through the Socrata Open Data API.
+
+This project automates the complete ETL process by:
+
+- Extracting contract data incrementally from the SECOP II API.
+- Cleaning and validating raw records.
+- Transforming the data into a Star Schema.
+- Loading the processed data into PostgreSQL.
+- Running automatically through GitHub Actions.
+
+The pipeline is designed following Data Engineering best practices with an emphasis on modularity, reproducibility, maintainability, and scalability.
+
+---
+
+## Features
+
+- Incremental extraction strategy
+- Modular ETL architecture
+- Star Schema data model
+- PostgreSQL data warehouse
+- Dockerized deployment
+- Automated GitHub Actions workflow
+- Logging and execution monitoring
+- Data quality validation
+
+---
 
 
-## Arquitectura
+## Getting Started
 
-```mermaid
-graph LR
-    A[API SECOP II] --> B[extraction]
-    B --> C[transformation]
-    C --> D[loading]
-    D --> E[(PostgreSQL)]
+Clone the repository:
+
+```bash
+git clone https://github.com/bryanmg20/secop2-etl-pipeline.git
 ```
 
-## Modelo de datos
-![Modelo de datos](assets/database_model.png)
+Install dependencies:
 
+```bash
+pip install -r requirements.txt
+```
 
-## Tecnologías
-Python · Pandas · PostgreSQL · SQLAlchemy · Power BI · Docker · Git
+Start PostgreSQL:
 
-## Recursos
+```bash
+docker compose up -d
+```
 
-- Documentación técnica: [`docs/`](docs/)
-- Dashboards y diagramas: [`assets/`](assets/)
+### Initial Load
+
+Run the pipeline in **initial mode** to populate an empty database with all available records.
+
+```bash
+python main.py --mode initial
+```
+
+### Incremental Load
+
+After the initial load, run the pipeline in **incremental mode** to ingest only newly published records.
+
+```bash
+python main.py --mode incremental
+```
+---
+
+## Documentation
+
+- [Architecture](docs/architecture.md)
+- [Data Dictionary](docs/data_dictionary.md)
