@@ -90,7 +90,7 @@ def main() -> None:
 
             data = extract_data(where_clause)
 
-            if data is False:  # No more data to fetch
+            if data is None or data.empty:  # No more data to fetch
                 break
 
             with engine.begin() as conn:

@@ -3,6 +3,7 @@ from dotenv import load_dotenv
 import pandas as pd
 import requests
 import time
+from typing import Optional
 
 from src.logger import get_logger
 
@@ -10,18 +11,24 @@ logger = get_logger(__name__)
 
 load_dotenv()
 
-api_secopii = os.getenv("API_SECOPII")
-app_token = os.getenv("SOCRATA_APP_TOKEN")  # opcional pero recomendado
+secopii_api_url = os.getenv("API_SECOPII")
+
+if not secopii_api_url:
+    raise ValueError("API_SECOPII environment variable is required")
+
+app_token = os.getenv("SOCRATA_APP_TOKEN")  # optional but recommended
 
 
-def extract_data(where_clause=None) -> pd.DataFrame:
+
+def extract_data(where_clause=None, max_retries=3) -> Optional[pd.DataFrame]:
     """Extract data from the SECOP II API using keyset pagination on :id.
 
     Args:
-        where_clause: cláusula WHERE para filtrar los datos.
+        where_clause: WHERE clause to filter the data.
 
     Returns:
-        pd.DataFrame: los datos extraídos, o False si no hay más datos.
+        pd.DataFrame: the extracted data, or an empty DataFrame if there is no more data.
+        None if an error occurs.
     """
     limit = 5000
 
@@ -48,7 +55,7 @@ def extract_data(where_clause=None) -> pd.DataFrame:
         'fecha_inicio_liquidacion', 'fecha_fin_liquidacion', 'ultima_actualizacion',
     ]
 
-    select_columns = [':id'] + columns  # pedimos también la columna de sistema
+    select_columns = [':id'] + columns  # include the system column too
 
 
     params = {
@@ -60,37 +67,40 @@ def extract_data(where_clause=None) -> pd.DataFrame:
 
     headers = {'X-App-Token': app_token} if app_token else {}
 
-    try:
-        logger.info(f"Starting data extraction with WHERE clause: {where_clause}")
-        response = requests.get(api_secopii, params=params, headers=headers, timeout=(60, 120))
-    
-        if response.status_code == 200:
-            data = response.json()
-            if not data:
-                logger.info("No more data to fetch.")
-                return False
+    delay = 1  # initial delay for exponential backoff
+    for attempt in range(max_retries+1):
+        try:
+            logger.info(f"Starting data extraction with WHERE clause: {where_clause}")
+            response = requests.get(secopii_api_url, params=params, headers=headers, timeout=(60, 120))
+        
+            if response.status_code == 200:
+                data = response.json()
+                if not data:
+                    logger.info("No more data to fetch.")
+                    return pd.DataFrame()  # Return an empty DataFrame instead of False
 
-            df_data = pd.DataFrame(data)
-            df_data = df_data.reindex(columns=select_columns)  # incluye ':id' + columnas originales
+                df_data = pd.DataFrame(data)
+                df_data = df_data.reindex(columns=select_columns)  # include ':id' + original columns
 
-            logger.info(f"Fetched {len(df_data)} records...")
-            return df_data
+                logger.info(f"Fetched {len(df_data)} records...")
+                return df_data
 
-        elif response.status_code == 503:
-            logger.warning("Service unavailable. Retrying...")
-            time.sleep(5)
-            return extract_data(where_clause)
+            recoverable_errors = [429,500,502,503,504,408]
+            if response.status_code in recoverable_errors:
+                logger.warning(f"Recoverable error: {response.status_code}. Retrying...")
+                delay *= 2  # exponential backoff
+                time.sleep(delay)
+                continue  # Retry the request
 
-        elif response.status_code == 429:
-            logger.warning("Rate limit exceeded. Retrying...")
-            time.sleep(10)
-            return extract_data(where_clause)
+            else:
+                logger.error(f"Error: {response.status_code} - {response.text}")
+                return None
 
-        else:
-            logger.error(f"Error: {response.status_code} - {response.text}")
-            return False
-
-    except (requests.exceptions.Timeout, requests.exceptions.ConnectionError) as e:
-        logger.error(f"Request failed: {e}. Retrying...")
-        time.sleep(10)
-        return extract_data(where_clause)
+        except (requests.exceptions.Timeout, requests.exceptions.ConnectionError) as e:
+            logger.error(f"Request failed: {e}. Retrying...")
+            delay *= 2  # exponential backoff
+            time.sleep(delay)
+            continue  # Retry the request
+        
+    logger.error("Max retries exceeded.")
+    return None
