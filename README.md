@@ -26,8 +26,6 @@ This project automates the complete ETL process by:
 - Loading the processed data into PostgreSQL.
 - Running automatically through GitHub Actions.
 
-The pipeline is designed following Data Engineering best practices with an emphasis on modularity, reproducibility, maintainability, and scalability.
-
 ---
 
 ## Features
