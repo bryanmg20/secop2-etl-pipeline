@@ -41,7 +41,6 @@ This project automates the complete ETL process by:
 
 ---
 
-
 ## Getting Started
 
 Clone the repository:
@@ -55,6 +54,14 @@ Install dependencies:
 ```bash
 pip install -r requirements.txt
 ```
+
+Create a `.env` file from the provided template:
+
+```bash
+cp .env.example .env
+```
+
+Update the environment variables with your own configuration.
 
 Start PostgreSQL:
 
@@ -77,7 +84,6 @@ After the initial load, run the pipeline in **incremental mode** to ingest only 
 ```bash
 python main.py --mode incremental
 ```
----
 
 ## Documentation
 
