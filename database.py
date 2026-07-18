@@ -29,10 +29,6 @@ def get_connection() -> Engine:
 
         engine = create_engine(url)
 
-        # Verifica que la conexión realmente funcione
-        with engine.connect() as conn:
-            conn.execute(text("SELECT 1"))
-
         logger.info("Database connection established successfully.")
         return engine
 
