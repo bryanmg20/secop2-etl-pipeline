@@ -89,3 +89,24 @@ python main.py --mode incremental
 
 - [Architecture](docs/architecture.md)
 - [Data Dictionary](docs/data_dictionary.md)
+
+## API documentation
+
+The API is available through FastAPI and can be explored interactively at:
+
+- `/docs` for Swagger UI
+- `/redoc` for ReDoc
+
+Key capabilities:
+
+- List contracts with pagination and filtering
+- Search contracts, entities and providers
+- Retrieve aggregate statistics and rankings
+
+Example usage:
+
+```bash
+curl http://localhost:8000/contracts/?limit=10&offset=0
+curl http://localhost:8000/contracts/filter?contract_type=Service%20provision&year=2024
+curl http://localhost:8000/health
+```

@@ -1,67 +1,29 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from api.db_conn import get_db
 from sqlalchemy import text
-from pydantic import BaseModel, Field
 import logging
+
+from api.schemas import ErrorResponse
+from api.models import ContractFilterParams, ContractResponse, PaginationParams
 
 logger = logging.getLogger(__name__)
 
 app = APIRouter()
 
-#limit-offset pagination
-class PaginationParams(BaseModel):
-    limit: int = Field(default=100, ge=1, le=5000)
-    offset: int = Field(default=0, ge=0)
-
-class ContractResponse(BaseModel):
-    id_contract: str
-    id_entity: int
-    id_provider: int
-
-    #Dates
-    id_contract_start_date: int | None
-    id_contract_end_date: int | None
-    id_signing_date: int | None
-    id_liquidation_start_date: int | None
-    id_liquidation_end_date: int | None
-    id_last_update_date: int | None
-
-    #Contract information
-    contract_state: str | None
-    method_of_contracting: str | None
-    source_of_resources: str | None
-    destination_of_expense: str | None
-    contract_type: str | None
-
-    #Monetary values
-    contract_value: float | None
-    paid_value: float | None
-    advance_payment_value: float | None
-    pending_payment_value: float | None
-    invoiced_value: float | None
-    amortized_value: float | None
-    pending_amortization_value: float | None
-    pending_execution_value: float | None
-
-    #Duration
-    additional_days: int | None
-    contract_can_be_extended: bool | None
-
-    #Booleans
-    liquidation: bool | None
-    environmental_obligation: bool | None
-    is_post_conflict: bool | None
-    allows_advance_payment: bool | None
-    post_consumer_obligations: bool | None
-    reversion: bool | None
-
-@app.get("/", response_model=list[ContractResponse])
+@app.get(
+    "/",
+    response_model=list[ContractResponse],
+    responses={200: {"model": list[ContractResponse], "description": "Paginated list of contracts",}, 500: {"model": ErrorResponse, "description": "Error while retrieving contracts"}},
+    summary="List contracts",
+    description="Returns paginated contracts from the database, with support for limiting and skipping results.",
+)
 async def get_contracts(pagination: PaginationParams = Depends(), db: Session = Depends(get_db)):
 
     
     query = text("""
         SELECT * FROM secop2ce.contract
+        ORDER BY id_contract ASC
         LIMIT :limit OFFSET :offset
     """)
     try:
@@ -76,8 +38,14 @@ async def get_contracts(pagination: PaginationParams = Depends(), db: Session = 
 
 
 
-@app.get("/search", response_model=list[ContractResponse])
-async def search_contracts(q: str, pagination: PaginationParams = Depends(), db: Session = Depends(get_db)):
+@app.get(
+    "/search",
+    response_model=list[ContractResponse],
+    responses={200: {"model": list[ContractResponse], "description": "Contracts matching the search"}, 500: {"model": ErrorResponse, "description": "Error while searching contracts"}},
+    summary="Search contracts",
+    description="Searches contracts by partial match in fields such as state, method, source, and type.",
+)
+async def search_contracts(q: str = Query(..., description="Free-text search term for contracts.", example="Prestacion de servicios"), pagination: PaginationParams = Depends(), db: Session = Depends(get_db)):
     sql_query = text("""
         SELECT * FROM secop2ce.contract
         WHERE 
@@ -102,19 +70,13 @@ async def search_contracts(q: str, pagination: PaginationParams = Depends(), db:
 
 
 
-#filer
-class ContractFilterParams(BaseModel):
-    contract_state: str | None = None
-    method_of_contracting: str | None = None
-    source_of_resources: str | None = None
-    destination_of_expense: str | None = None
-    contract_type: str | None = None
-    year: int | None = None
-    department: str | None = None
-    min_contract_value: float | None = None
-    max_contract_value: float | None = None
-
-@app.get("/filter", response_model=list[ContractResponse])
+@app.get(
+    "/filter",
+    response_model=list[ContractResponse],
+    responses={200: {"model": list[ContractResponse], "description": "Filtered contracts"}, 422: {"model": ErrorResponse, "description": "Validation error in filter parameters"}, 500: {"model": ErrorResponse, "description": "Error while filtering contracts"}},
+    summary="Filter contracts",
+    description="Filters contracts by state, type, procurement method, resource source, year, department, and value range.",
+)
 async def filter_contracts(filters: ContractFilterParams = Depends(), pagination: PaginationParams = Depends(), db: Session = Depends(get_db)):
     
     joins = []
@@ -179,7 +141,13 @@ async def filter_contracts(filters: ContractFilterParams = Depends(), pagination
 
 
 #by-id
-@app.get("/{id_contract}", response_model=ContractResponse)
+@app.get(
+    "/{id_contract}",
+    response_model=ContractResponse,
+    responses={200: {"model": ContractResponse, "description": "Contract found"}, 404: {"model": ErrorResponse, "description": "Contract not found"}, 500: {"model": ErrorResponse, "description": "Error while retrieving a contract"}},
+    summary="Get contract by ID",
+    description="Returns the full details of a contract from its unique identifier.",
+)
 async def get_contract_by_id(id_contract: str, db: Session = Depends(get_db)):
     query = text("""
         SELECT * FROM secop2ce.contract
@@ -199,7 +167,13 @@ async def get_contract_by_id(id_contract: str, db: Session = Depends(get_db)):
 
 
 #contracts-per-entity
-@app.get("/entity/{nit_entity}", response_model=list[ContractResponse])
+@app.get(
+    "/entity/{nit_entity}",
+    response_model=list[ContractResponse],
+    responses={200: {"model": list[ContractResponse], "description": "Contracts associated with the entity"}, 500: {"model": ErrorResponse, "description": "Error while retrieving contracts for the entity"}},
+    summary="Contracts by entity",
+    description="Returns the contracts associated with an entity from its NIT.",
+)
 async def get_contracts_per_entity(nit_entity: int, db: Session = Depends(get_db)):
     query = text("""
         SELECT c.* FROM secop2ce.contract AS c
@@ -217,7 +191,13 @@ async def get_contracts_per_entity(nit_entity: int, db: Session = Depends(get_db
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
 #contracts-per-provider
-@app.get("/provider/{nit_cc_provider}", response_model=list[ContractResponse])
+@app.get(
+    "/provider/{nit_cc_provider}",
+    response_model=list[ContractResponse],
+    responses={200: {"model": list[ContractResponse], "description": "Contratos asociados al proveedor"}, 500: {"model": ErrorResponse, "description": "Error while retrieving contracts for the provider"}},
+    summary="Contracts by provider",
+    description="Returns the contracts associated with a provider from its document.",
+)
 async def get_contracts_per_provider(nit_cc_provider: str, db: Session = Depends(get_db)):
     query = text("""
         SELECT c.* FROM secop2ce.contract AS c

@@ -2,35 +2,25 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from api.db_conn import get_db
 from sqlalchemy import text
-from pydantic import BaseModel
+from api.schemas import ErrorResponse
+from api.models import ContractsByDepartmentResponse, ContractsByYearResponse, TopEntitiesResponse, TopProvidersResponse
+from api.queries.rankings import CONTRACTS_BY_DEPARTMENT_QUERY, CONTRACTS_BY_YEAR_QUERY, TOP_ENTITIES_QUERY, TOP_PROVIDERS_QUERY
 import logging
 
 logger = logging.getLogger(__name__)
 
 app = APIRouter()
-
-
-class TopProvidersResponse(BaseModel):
-    id_provider: int
-    document_provider: str
-    name_provider: str
-    contract_count: int
-
-
 #top-providers
-@app.get("/top-providers", response_model = list[TopProvidersResponse])
+@app.get(
+    "/top-providers",
+    response_model=list[TopProvidersResponse],
+    responses={200: {"model": list[TopProvidersResponse], "description": "Top providers", "content": {"application/json": {"example": [{"id_provider": 713062461, "document_provider": "8.786.444", "name_provider": "ABELARDO DE LA ESPRIELLA PEREZ", "contract_count": 2}]}}}, 500: {"model": ErrorResponse, "description": "Error while retrieving top providers"}},
+    summary="Top providers",
+    description="Returns the providers with the highest number of contracts in the database.",
+)
 async def get_top_providers(db: Session = Depends(get_db)):
-
-    query = """
-    SELECT p.id_provider,p.provider_document,p.name_provider, COUNT(c.id_contract) AS contract_count
-    FROM secop2ce.provider p
-    INNER JOIN secop2ce.contract c ON p.id_provider = c.id_provider
-    GROUP BY p.id_provider, p.name_provider
-    ORDER BY contract_count DESC
-    LIMIT 100
-    """
     try:
-        result = db.execute(text(query))
+        result = db.execute(text(TOP_PROVIDERS_QUERY))
         top_providers = result.fetchall()
 
         return [
@@ -46,29 +36,19 @@ async def get_top_providers(db: Session = Depends(get_db)):
     except HTTPException as e:
         raise
     except Exception as e:
-        logger.error(f"Error en /top-providers: {e}")
+        logger.error(f"Error in /top-providers: {e}")
         raise HTTPException(status_code=500, detail=f"Error retrieving top providers")
-
-
-class TopEntitiesResponse(BaseModel):
-    id_entity: int
-    nit_entity: int
-    name_entity: str
-    contract_count: int
-
 #top-entities
-@app.get("/top-entities", response_model = list[TopEntitiesResponse])
+@app.get(
+    "/top-entities",
+    response_model=list[TopEntitiesResponse],
+    responses={200: {"model": list[TopEntitiesResponse], "description": "Top entities"}, 500: {"model": ErrorResponse, "description": "Error while retrieving top entities"}},
+    summary="Top entities",
+    description="Returns the entities with the highest number of contracts in the database.",
+)
 async def get_top_entities(db: Session = Depends(get_db)):
-    query = """
-    SELECT e.id_entity,e.nit_entity,e.name_entity, COUNT(c.id_contract) AS contract_count
-    FROM secop2ce.entity e
-    INNER JOIN secop2ce.contract c ON e.id_entity = c.id_entity
-    GROUP BY e.id_entity
-    ORDER BY contract_count DESC
-    LIMIT 100
-    """
     try:
-        result = db.execute(text(query))
+        result = db.execute(text(TOP_ENTITIES_QUERY))
         top_entities = result.fetchall()
 
         return [
@@ -84,31 +64,19 @@ async def get_top_entities(db: Session = Depends(get_db)):
     except HTTPException as e:
         raise
     except Exception as e:
-        logger.error(f"Error en /top-entities: {e}")
+        logger.error(f"Error in /top-entities: {e}")
         raise HTTPException(status_code=500, detail=f"Error retrieving top entities")
 
-#by-department
-class ContractsByDepartmentResponse(BaseModel):
-    department: str
-    contract_count: int
-    total_contract_value: float
-    avg_value: float
-    biggest_contract_value: float
-
-@app.get("/by-department", response_model = list[ContractsByDepartmentResponse])
+@app.get(
+    "/by-department",
+    response_model=list[ContractsByDepartmentResponse],
+    responses={200: {"model": list[ContractsByDepartmentResponse], "description": "Contracts grouped by department"}, 500: {"model": ErrorResponse, "description": "Error while retrieving contracts by department"}},
+    summary="Contracts by department",
+    description="Groups contracts by department and returns aggregated value metrics.",
+)
 async def get_contracts_by_department(db: Session = Depends(get_db)):
-    query = """
-    SELECT d.department, COUNT(c.id_contract) AS contract_count, SUM(c.contract_value) AS total_contract_value,
-           AVG(c.contract_value) AS avg_value, MAX(c.contract_value) AS biggest_contract_value
-    FROM secop2ce.location d
-    INNER JOIN secop2ce.entity e ON d.id_location = e.id_location
-    INNER JOIN secop2ce.contract c ON e.id_entity = c.id_entity
-    WHERE d.department != 'NO DEFINIDO'
-    GROUP BY d.department
-    ORDER BY contract_count DESC
-    """
     try:
-        result = db.execute(text(query))
+        result = db.execute(text(CONTRACTS_BY_DEPARTMENT_QUERY))
         contracts_by_department = result.fetchall()
 
         return [
@@ -125,29 +93,19 @@ async def get_contracts_by_department(db: Session = Depends(get_db)):
     except HTTPException as e:
         raise
     except Exception as e:
-        logger.error(f"Error en /by-department: {e}")
+        logger.error(f"Error in /by-department: {e}")
         raise HTTPException(status_code=500, detail=f"Error retrieving contracts by department")
 
-#by-year
-class ContractsByYearResponse(BaseModel):
-    year: int
-    contract_count: int
-    total_contract_value: float
-    avg_value: float
-    biggest_contract_value: float
-
-@app.get("/by-year", response_model = list[ContractsByYearResponse])
+@app.get(
+    "/by-year",
+    response_model=list[ContractsByYearResponse],
+    responses={200: {"model": list[ContractsByYearResponse], "description": "Contracts grouped by year"}, 500: {"model": ErrorResponse, "description": "Error while retrieving contracts by year"}},
+    summary="Contracts by year",
+    description="Groups contracts by signing year and returns aggregated value metrics.",
+)
 async def get_contracts_by_year(db: Session = Depends(get_db)):
-    query = """
-    SELECT d.year, COUNT(c.id_contract) AS contract_count, SUM(c.contract_value) AS total_contract_value,
-           AVG(c.contract_value) AS avg_value, MAX(c.contract_value) AS biggest_contract_value
-    FROM secop2ce.dim_date d
-    INNER JOIN secop2ce.contract c ON d.id_date = c.id_signing_date
-    GROUP BY d.year
-    ORDER BY d.year DESC
-    """
     try:
-        result = db.execute(text(query))
+        result = db.execute(text(CONTRACTS_BY_YEAR_QUERY))
         contracts_by_year = result.fetchall()
 
         return [
@@ -164,5 +122,5 @@ async def get_contracts_by_year(db: Session = Depends(get_db)):
     except HTTPException as e:
         raise
     except Exception as e:
-        logger.error(f"Error en /by-year: {e}")
+        logger.error(f"Error in /by-year: {e}")
         raise HTTPException(status_code=500, detail=f"Error retrieving contracts by year")
