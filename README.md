@@ -7,10 +7,11 @@
 ![Docker](https://img.shields.io/badge/Docker-2496ED?logo=docker&logoColor=white)
 ![DigitalOcean](https://img.shields.io/badge/DigitalOcean-Droplet-0080FF?logo=digitalocean&logoColor=white)
 ![GitHub Actions](https://img.shields.io/badge/GitHub_Actions-Automated-2088FF?logo=githubactions&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.100+-009688?logo=fastapi&logoColor=white)
 
 </p>
 
-Production-ready ETL pipeline that incrementally extracts Colombian public procurement contracts from **SECOP II**, transforms the data into a dimensional model, and loads it into a PostgreSQL data warehouse designed for analytical workloads.
+ETL pipeline that incrementally extracts Colombian public procurement contracts from **SECOP II**, transforms the data into a dimensional model, and loads it into a PostgreSQL data warehouse designed for analytical workloads.
 
 ---
 
@@ -28,6 +29,14 @@ This project automates the complete ETL process by:
 
 ---
 
+## Queries Examples
+
+![Which entities have the most contracts?](assets/queries/entity-per-countcontracts.png)
+
+![Which contract types have the highest total contract value?](assets/queries/type-per-value.png)
+
+---
+
 ## Features
 
 - Incremental extraction strategy
@@ -36,7 +45,7 @@ This project automates the complete ETL process by:
 - PostgreSQL data warehouse
 - Dockerized deployment
 - Automated GitHub Actions workflow
-- Logging and execution monitoring
+- Logging
 - Data quality validation
 
 ---
@@ -85,12 +94,20 @@ After the initial load, run the pipeline in **incremental mode** to ingest only 
 python main.py --mode incremental
 ```
 
+### Running the API
+
+```bash
+uvicorn api.main:app --reload
+```
+
+---
+
 ## Documentation
 
 - [Architecture](docs/architecture.md)
 - [Data Dictionary](docs/data_dictionary.md)
 
-## API documentation
+## API Documentation
 
 The API is available through FastAPI and can be explored interactively at:
 
