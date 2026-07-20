@@ -29,11 +29,11 @@ This project automates the complete ETL process by:
 
 ---
 
-## Queries Examples
+## APIFAST Examples
 
-![Which entities have the most contracts?](assets/queries/entity-per-countcontracts.png)
+![Top providers](assets/api/top-providers.png)
 
-![Which contract types have the highest total contract value?](assets/queries/type-per-value.png)
+![Information of one provider](assets/api/id-provider.png)
 
 ---
 
@@ -106,6 +106,7 @@ uvicorn api.main:app --reload
 
 - [Architecture](docs/architecture.md)
 - [Data Dictionary](docs/data_dictionary.md)
+- [Data Modeling](assets/database_model.png)
 
 ## API Documentation
 
